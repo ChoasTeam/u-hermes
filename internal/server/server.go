@@ -52,21 +52,23 @@ func New(st *store.Store, cfg *config.Config, chatSvc *chat.Service, configPath 
 		api.POST("/settings/reset", s.handleResetSettings)
 	}
 
-	// Serve embedded SPA or fallback to disk
-	distFS, err := fs.Sub(webAssets, "web/dist")
-	if err != nil {
-		engine.Static("/assets", "./web/dist/assets")
-		engine.StaticFile("/", "./web/dist/index.html")
+	// Serve embedded SPA — any non-API route returns index.html
+	var indexHTML []byte
+	if webAssets != nil {
+		if distFS, err := fs.Sub(webAssets, "web/dist"); err == nil {
+			engine.StaticFS("/assets", mustSub(distFS, "assets"))
+			indexHTML, _ = fs.ReadFile(distFS, "index.html")
+		}
+	}
+	if indexHTML != nil {
+		html := indexHTML
 		engine.NoRoute(func(c *gin.Context) {
-			c.File("./web/dist/index.html")
+			c.Data(http.StatusOK, "text/html; charset=utf-8", html)
 		})
 	} else {
-		engine.StaticFS("/assets", mustSub(distFS, "assets"))
-		engine.GET("/", func(c *gin.Context) {
-			c.FileFromFS("index.html", http.FS(distFS))
-		})
+		engine.Static("/assets", "./web/dist/assets")
 		engine.NoRoute(func(c *gin.Context) {
-			c.FileFromFS("index.html", http.FS(distFS))
+			c.File("./web/dist/index.html")
 		})
 	}
 

@@ -13,3 +13,4 @@ config.json
 .idea/
 *.log
 u-hermes.new
+web/test-results/

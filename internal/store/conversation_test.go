@@ -2,7 +2,6 @@ package store
 
 import (
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +24,6 @@ func TestCreateAndListConversations(t *testing.T) {
 		t.Fatalf("create: %v", err)
 	}
 
-	time.Sleep(1 * time.Second)
 	c2 := &Conversation{ID: uuid.New().String(), Title: "Second chat"}
 	if err := s.CreateConversation(c2); err != nil {
 		t.Fatalf("create: %v", err)

@@ -13,7 +13,7 @@ type Message struct {
 
 func (s *Store) CreateMessage(msg *Message) error {
 	if msg.CreatedAt == 0 {
-		msg.CreatedAt = time.Now().Unix()
+		msg.CreatedAt = time.Now().UnixMilli()
 	}
 	_, err := s.db.Exec(
 		"INSERT INTO messages (id, conversation_id, role, content, tokens_used, created_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -24,7 +24,7 @@ func (s *Store) CreateMessage(msg *Message) error {
 
 func (s *Store) ListMessages(conversationID string) ([]Message, error) {
 	rows, err := s.db.Query(
-		"SELECT id, conversation_id, role, content, tokens_used, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC",
+		"SELECT id, conversation_id, role, content, tokens_used, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC, rowid ASC",
 		conversationID,
 	)
 	if err != nil {

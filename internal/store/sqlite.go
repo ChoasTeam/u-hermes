@@ -24,12 +24,18 @@ func Open(dataDir string) (*Store, error) {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
 
+	// SQLite: single writer for best performance
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+
 	if err := db.Ping(); err != nil {
+		db.Close()
 		return nil, fmt.Errorf("ping db: %w", err)
 	}
 
 	store := &Store{db: db}
 	if err := store.migrate(); err != nil {
+		db.Close()
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
 	return store, nil

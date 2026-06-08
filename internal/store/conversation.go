@@ -13,7 +13,7 @@ type Conversation struct {
 }
 
 func (s *Store) CreateConversation(conv *Conversation) error {
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 	if conv.CreatedAt == 0 {
 		conv.CreatedAt = now
 	}
@@ -29,7 +29,7 @@ func (s *Store) CreateConversation(conv *Conversation) error {
 
 func (s *Store) ListConversations() ([]Conversation, error) {
 	rows, err := s.db.Query(
-		"SELECT id, title, created_at, updated_at FROM conversations ORDER BY updated_at DESC",
+		"SELECT id, title, created_at, updated_at FROM conversations ORDER BY updated_at DESC, rowid DESC",
 	)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (s *Store) GetConversation(id string) (*Conversation, error) {
 func (s *Store) UpdateConversationTitle(id, title string) error {
 	_, err := s.db.Exec(
 		"UPDATE conversations SET title = ?, updated_at = ? WHERE id = ?",
-		title, time.Now().Unix(), id,
+		title, time.Now().UnixMilli(), id,
 	)
 	return err
 }

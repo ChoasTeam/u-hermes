@@ -14,3 +14,4 @@ config.json
 *.log
 u-hermes.new
 web/test-results/
+*.exe~

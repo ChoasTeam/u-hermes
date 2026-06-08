@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"u-hermes/internal/chat"
 	"u-hermes/internal/config"
@@ -82,18 +84,20 @@ func main() {
 
 	// Start HTTP server
 	go func() {
-		log.Printf("U-Hermes v%s listening on http://127.0.0.1:%d", version, port)
 		if err := srv.Engine().Run(fmt.Sprintf("127.0.0.1:%d", port)); err != nil {
 			log.Fatalf("Server error: %v", err)
 		}
 	}()
 
-	// Open browser
+	// Wait until server is ready before opening browser
+	waitForServer(port, 3*time.Second)
+
 	if !*noBrowser {
 		targetURL := fmt.Sprintf("http://127.0.0.1:%d/chat", port)
 		if isFirstRun {
 			targetURL = fmt.Sprintf("http://127.0.0.1:%d/onboarding", port)
 		}
+		log.Printf("U-Hermes v%s ready at %s", version, targetURL)
 		open.Run(targetURL)
 	}
 
@@ -147,4 +151,21 @@ func mustExePath() string {
 		log.Fatalf("Cannot determine executable path: %v", err)
 	}
 	return p
+}
+
+func waitForServer(port int, timeout time.Duration) {
+	deadline := time.Now().Add(timeout)
+	url := fmt.Sprintf("http://127.0.0.1:%d/api/health", port)
+	for time.Now().Before(deadline) {
+		resp, err := http.Get(url)
+		if err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return
+			}
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	// Server didn't start in time — proceed anyway, browser will retry
+	log.Printf("Warning: server not ready after %v", timeout)
 }

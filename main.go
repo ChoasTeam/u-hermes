@@ -33,7 +33,9 @@ func main() {
 	}
 
 	fmt.Printf("u-hermes v%s starting on port %d...\n", version, *portFlag)
+	// TODO(Task 6): Use noBrowser to suppress browser auto-open
 	_ = noBrowser
 	// TODO: server start, tray, browser open (later tasks)
+	// TODO(Task 6): Start server, tray, and block on signal
 	select {}
 }

@@ -7,3 +7,8 @@ web/dist/
 *.exe.new
 data/
 config.json
+.env
+.env.local
+.vscode/
+.idea/
+*.log

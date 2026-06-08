@@ -1,10 +1,10 @@
-# Hermes USB — Phase 1: 基础聊天壳 设计文档
+# U-Hermes USB — Phase 1: 基础聊天壳 设计文档
 
 > 日期: 2026-06-08 | 状态: 设计完成，待审核
 
 ## 产品概述
 
-Hermes 是一个即插即用的 U 盘 AI 助手。Phase 1 交付基础聊天能力：插上 U 盘、双击 exe、浏览器自动打开、扫码配置模型 Key、开始聊天。
+U-Hermes 是一个即插即用的 U 盘 AI 助手。Phase 1 交付基础聊天能力：插上 U 盘、双击 exe、浏览器自动打开、扫码配置模型 Key、开始聊天。
 
 ## 里程碑路线图
 
@@ -30,11 +30,11 @@ Hermes 是一个即插即用的 U 盘 AI 助手。Phase 1 交付基础聊天能�
 ## U 盘文件结构
 
 ```
-Hermes/
-├── hermes.exe          # 唯一可执行文件 (~35MB)
+U-Hermes/
+├── u-hermes.exe          # 唯一可执行文件 (~35MB)
 ├── config.json          # 用户配置（首次运行自动生成）
 └── data/
-    └── hermes.db        # SQLite（聊天记录、记忆、技能数据）
+    └── u-hermes.db        # SQLite（聊天记录、记忆、技能数据）
 ```
 
 ---
@@ -42,7 +42,7 @@ Hermes/
 ## 架构
 
 ```
-hermes.exe (Go 单二进制)
+u-hermes.exe (Go 单二进制)
 ├── HTTP Server (Gin)
 │   ├── /              → React SPA (go:embed)
 │   ├── /api/chat      → 聊天 + SSE 流式输出
@@ -57,7 +57,7 @@ hermes.exe (Go 单二进制)
 │   └── UpdateService   → GitHub Releases 检查 + 下载 + 校验
 └── 存储层
     ├── config.json     → JSON（可手改）
-    └── data/hermes.db  → SQLite（WAL 模式）
+    └── data/u-hermes.db  → SQLite（WAL 模式）
 ```
 
 ### 关键设计约束
@@ -80,7 +80,7 @@ hermes.exe (Go 单二进制)
                   ↓
   双击 exe → 检测已有实例 → 打开浏览器到 /chat
   关闭浏览器 → 托盘仍在 → 右键/双击托盘可重开
-  托盘右键 → "退出 Hermes" → 关闭 DB → 允许拔盘
+  托盘右键 → "退出 U-Hermes" → 关闭 DB → 允许拔盘
 [异常拔出] → 下次启动 WAL 恢复 → 提示"数据已自动恢复"
 ```
 
@@ -88,14 +88,14 @@ hermes.exe (Go 单二进制)
 
 ```
 ┌─────────────────────┐
-│ 🟢 Hermes 运行中     │
+│ 🟢 U-Hermes 运行中     │
 ├─────────────────────┤
 │ 🌐 打开聊天界面      │
 │ 📊 查看状态          │
 │ ─────────────────── │
 │ 🔄 检查更新          │
 │ ─────────────────── │
-│ ⏹️ 退出 Hermes       │
+│ ⏹️ 退出 U-Hermes       │
 └─────────────────────┘
 ```
 
@@ -104,7 +104,7 @@ hermes.exe (Go 单二进制)
 
 ### 浏览器找回路径
 
-1. 再次双击 `hermes.exe` → 检测已有实例 → 直接打开浏览器
+1. 再次双击 `u-hermes.exe` → 检测已有实例 → 直接打开浏览器
 2. 系统托盘右键 → "打开聊天界面"
 3. 浏览器手动输入 `http://localhost:21475`
 
@@ -121,7 +121,7 @@ hermes.exe (Go 单二进制)
 | 背景 | `#0a0a0b` 微渐变 |
 | 用户气泡 | 紫色渐变 (`#6366f1 → #7c3aed`)，右对齐，带光晕 |
 | AI 气泡 | 深灰卡片 (`#111113`)，左对齐，圆角 |
-| 发送者标签 | 用户：紫色圆点 + "你"；AI：绿色方块 + "Hermes" |
+| 发送者标签 | 用户：紫色圆点 + "你"；AI：绿色方块 + "U-Hermes" |
 | 品牌色 | 紫蓝渐变 (primary) / 翠绿 (success/ai) |
 | 字体 | 系统无衬线（内容）+ SF Mono（代码） |
 
@@ -129,12 +129,12 @@ hermes.exe (Go 单二进制)
 
 自适应单栏：默认极简聊天窗，左侧汉堡菜单（☰）滑出功能面板。
 
-**顶部栏**：Hermes logo + 绿色状态点 + 模型名 + 设置齿轮 + 汉堡菜单
+**顶部栏**：U-Hermes logo + 绿色状态点 + 模型名 + 设置齿轮 + 汉堡菜单
 
 **侧边面板**（渐进式）：
 - Phase 1 只显示：+ 新对话、最近对话列表、设置
 - Phase 2-5 的新功能随升级自然出现，不显示"即将上线"占位
-- 底部叙事："Hermes 会越用越聪明"
+- 底部叙事："U-Hermes 会越用越聪明"
 
 ### 设置页
 
@@ -146,7 +146,7 @@ hermes.exe (Go 单二进制)
 ### 聊天空状态
 
 首次打开聊天时显示：
-- Hermes logo + "有什么可以帮你的？"
+- U-Hermes logo + "有什么可以帮你的？"
 - 6 个建议问题 chips（根据时间段变化：早上→今日计划，下午→日报总结，晚上→复盘反思。Phase 2+ 加入历史对话个性化）
 - 输入框常驻底部
 
@@ -196,7 +196,7 @@ hermes.exe (Go 单二进制)
 - 更新源：GitHub Releases
 - 检查频率：启动时 + 每 24 小时后台轮询
 - 有更新时托盘图标变更（绿点 → 蓝点 + 气泡提示）
-- 更新流程：下载 `hermes.new` → SHA256 校验 → 旧文件重命名 `.bak` → 新文件替换 → 自动重启
+- 更新流程：下载 `u-hermes.new` → SHA256 校验 → 旧文件重命名 `.bak` → 新文件替换 → 自动重启
 - 更新失败：回滚到 `.bak`，提示错误
 
 ---
@@ -317,11 +317,11 @@ CREATE TABLE messages (
 Phase 1 CLI 最小集：
 
 ```bash
-hermes.exe              # 启动服务 + 打开浏览器
-hermes.exe --version     # 输出版本号
-hermes.exe --reset       # 恢复出厂设置（确认交互）
-hermes.exe --port 21475  # 指定端口启动
-hermes.exe --no-browser  # 只启动服务，不打开浏览器
+u-hermes.exe              # 启动服务 + 打开浏览器
+u-hermes.exe --version     # 输出版本号
+u-hermes.exe --reset       # 恢复出厂设置（确认交互）
+u-hermes.exe --port 21475  # 指定端口启动
+u-hermes.exe --no-browser  # 只启动服务，不打开浏览器
 ```
 
 ---

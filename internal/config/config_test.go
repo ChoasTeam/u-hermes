@@ -39,11 +39,31 @@ func TestSaveAndLoadConfig_PreservesData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load failed: %v", err)
 	}
+
+	// Verify all fields preserved
+	if loaded.Version != 1 {
+		t.Errorf("version mismatch: got %d", loaded.Version)
+	}
+	if len(loaded.Models) != 1 {
+		t.Fatalf("expected 1 model, got %d", len(loaded.Models))
+	}
+	if loaded.Models[0].ID != "default" {
+		t.Errorf("ID mismatch: %s", loaded.Models[0].ID)
+	}
 	if loaded.Models[0].Name != "DeepSeek" {
 		t.Errorf("name mismatch: %s", loaded.Models[0].Name)
 	}
+	if loaded.Models[0].APIBase != "https://api.deepseek.com" {
+		t.Errorf("API base mismatch: %s", loaded.Models[0].APIBase)
+	}
 	if loaded.Models[0].APIKey != "sk-test" {
 		t.Errorf("API key mismatch: %s", loaded.Models[0].APIKey)
+	}
+	if !loaded.Models[0].IsDefault {
+		t.Errorf("IsDefault should be true")
+	}
+	if loaded.Chat.SystemPrompt != "hello" {
+		t.Errorf("system prompt mismatch: %s", loaded.Chat.SystemPrompt)
 	}
 }
 

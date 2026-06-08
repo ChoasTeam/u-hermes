@@ -11,6 +11,7 @@ export function useChat() {
     conversationId: string,
     content: string,
     model: string,
+    onConversationCreated?: (convId: string) => void,
   ) => {
     setError(null);
     setIsStreaming(true);
@@ -56,6 +57,10 @@ export function useChat() {
           ),
         );
         setIsStreaming(false);
+        // Pass the real conversation_id back
+        if (data.conversation_id && onConversationCreated) {
+          onConversationCreated(data.conversation_id);
+        }
       },
       (err) => {
         setError(err);
@@ -63,6 +68,7 @@ export function useChat() {
       },
     );
 
+    // Return the AI message ID for UI tracking (not conversation ID)
     return aiMsgId;
   }, []);
 

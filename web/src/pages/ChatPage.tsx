@@ -60,11 +60,12 @@ export default function ChatPage() {
 
   const handleSend = useCallback(async (content: string) => {
     const convId = currentConvId || '';
-    const newConvId = await send(convId, content, '');
-    if (!currentConvId) {
-      setCurrentConvId(newConvId || '');
-      refreshConvs();
-    }
+    await send(convId, content, '', (newConvId: string) => {
+      if (!currentConvId) {
+        setCurrentConvId(newConvId);
+        refreshConvs();
+      }
+    });
   }, [send, currentConvId, refreshConvs]);
 
   return (

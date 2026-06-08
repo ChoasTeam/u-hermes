@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"u-hermes/internal/chat"
@@ -45,7 +46,11 @@ func (s *Server) handleChat(c *gin.Context) {
 		s.store.CreateConversation(&store.Conversation{ID: convID, Title: ""})
 	}
 
-	history, _ := s.store.ListMessages(convID)
+	history, err := s.store.ListMessages(convID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load history"})
+		return
+	}
 	messages := make([]chat.Message, 0, len(history)+1)
 	for _, m := range history {
 		messages = append(messages, chat.Message{Role: m.Role, Content: m.Content})
@@ -57,9 +62,13 @@ func (s *Server) handleChat(c *gin.Context) {
 	}
 
 	userMsgID := uuid.New().String()
-	s.store.CreateMessage(&store.Message{
+	if err := s.store.CreateMessage(&store.Message{
 		ID: userMsgID, ConversationID: convID, Role: "user", Content: req.Message,
-	})
+	}); err != nil {
+		data, _ := json.Marshal(gin.H{"error": "failed to save message"})
+		fmt.Fprintf(c.Writer, "event: error\ndata: %s\n\n", string(data))
+		return
+	}
 
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
@@ -90,18 +99,22 @@ func (s *Server) handleChat(c *gin.Context) {
 			flusher.Flush()
 		}
 		if fullContent != "" {
-			s.store.CreateMessage(&store.Message{
+			if err := s.store.CreateMessage(&store.Message{
 				ID: assistantMsgID, ConversationID: convID,
 				Role: "assistant", Content: fullContent, TokensUsed: totalTokens,
-			})
+			}); err != nil {
+				log.Printf("Failed to save assistant message on error path: %v", err)
+			}
 		}
 		return
 	}
 
-	s.store.CreateMessage(&store.Message{
+	if err := s.store.CreateMessage(&store.Message{
 		ID: assistantMsgID, ConversationID: convID,
 		Role: "assistant", Content: fullContent, TokensUsed: totalTokens,
-	})
+	}); err != nil {
+		log.Printf("Failed to save assistant message: %v", err)
+	}
 
 	conv, _ := s.store.GetConversation(convID)
 	if conv != nil && conv.Title == "" {
@@ -109,7 +122,9 @@ func (s *Server) handleChat(c *gin.Context) {
 		if len([]rune(title)) > 30 {
 			title = string([]rune(title)[:30]) + "..."
 		}
-		s.store.UpdateConversationTitle(convID, title)
+		if err := s.store.UpdateConversationTitle(convID, title); err != nil {
+			log.Printf("Failed to update conversation title: %v", err)
+		}
 	}
 
 	data, _ := json.Marshal(gin.H{

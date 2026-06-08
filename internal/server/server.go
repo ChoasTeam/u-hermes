@@ -43,6 +43,7 @@ func New(st *store.Store, cfg *config.Config, chatSvc *chat.Service, configPath 
 		api.POST("/conversations", s.handleCreateConversation)
 		api.GET("/conversations/:id", s.handleGetConversation)
 		api.DELETE("/conversations/:id", s.handleDeleteConversation)
+		api.POST("/models", s.handleCreateModel)
 		api.GET("/models", s.handleListModels)
 		api.PUT("/models/:id", s.handleUpdateModel)
 		api.POST("/models/:id/test", s.handleTestModel)

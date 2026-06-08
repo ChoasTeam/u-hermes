@@ -6,7 +6,26 @@ import (
 	"u-hermes/internal/config"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
+
+func (s *Server) handleCreateModel(c *gin.Context) {
+	var newModel config.ModelConfig
+	if err := c.ShouldBindJSON(&newModel); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+	if newModel.ID == "" {
+		newModel.ID = uuid.New().String()
+	}
+	s.config.Models = append(s.config.Models, newModel)
+
+	if err := config.Save(s.configPath, s.config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save config"})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"status": "created", "id": newModel.ID})
+}
 
 func (s *Server) handleListModels(c *gin.Context) {
 	models := s.config.Models

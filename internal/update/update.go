@@ -66,6 +66,7 @@ func (s *Service) CheckForUpdate() (*Release, error) {
 
 func (s *Service) DownloadAndVerify(release *Release) (string, error) {
 	assetName := fmt.Sprintf("u-hermes-%s-%s.exe", runtime.GOOS, runtime.GOARCH)
+	fallbackName := "u-hermes.exe"
 	var downloadURL string
 	for _, a := range release.Assets {
 		if a.Name == assetName {
@@ -74,7 +75,16 @@ func (s *Service) DownloadAndVerify(release *Release) (string, error) {
 		}
 	}
 	if downloadURL == "" {
-		return "", fmt.Errorf("no asset found for %s", assetName)
+		// Fallback: try bare name (used for single-platform releases)
+		for _, a := range release.Assets {
+			if a.Name == fallbackName {
+				downloadURL = a.BrowserDownloadURL
+				break
+			}
+		}
+	}
+	if downloadURL == "" {
+		return "", fmt.Errorf("no asset found for %s or %s", assetName, fallbackName)
 	}
 
 	resp, err := s.httpClient.Get(downloadURL)

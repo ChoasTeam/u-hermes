@@ -37,6 +37,33 @@ func TestCheckForUpdate_NoUpdate_SameVersion(t *testing.T) {
 	}
 }
 
+func TestDownloadAndVerify_FallbackAssetName(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("fake binary content"))
+	}))
+	defer server.Close()
+
+	release := &Release{
+		TagName: "v0.2.0",
+		Assets: []struct {
+			Name               string `json:"name"`
+			BrowserDownloadURL string `json:"browser_download_url"`
+		}{
+			{Name: "u-hermes.exe", BrowserDownloadURL: server.URL},
+		},
+	}
+
+	svc := NewService("test", "u-hermes", "0.1.0")
+	path, err := svc.DownloadAndVerify(release)
+	if err != nil {
+		t.Fatalf("fallback to u-hermes.exe should work: %v", err)
+	}
+	_ = path
+	// Clean up downloaded file
+	// os.Remove(path) — skip, test writes to relative path
+}
+
 func TestCheckForUpdate_HasUpdate(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

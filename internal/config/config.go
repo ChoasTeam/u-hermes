@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -53,6 +54,9 @@ func Load(path string) (*Config, error) {
 }
 
 func Save(path string, cfg *Config) error {
+	if cfg == nil {
+		return fmt.Errorf("cannot save nil config")
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}

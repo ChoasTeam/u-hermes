@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -85,5 +86,51 @@ func TestConfig_GetDefaultModel_NoDefault_ReturnsNil(t *testing.T) {
 	cfg := &Config{Models: []ModelConfig{}}
 	if m := cfg.GetDefaultModel(); m != nil {
 		t.Errorf("expected nil, got %v", m)
+	}
+}
+
+func TestConfig_GetDefaultModel_NoDefault_ReturnsFirst(t *testing.T) {
+	cfg := &Config{
+		Models: []ModelConfig{
+			{ID: "a"},
+			{ID: "b"},
+		},
+	}
+	m := cfg.GetDefaultModel()
+	if m == nil || m.ID != "a" {
+		t.Errorf("expected first model 'a', got %v", m)
+	}
+}
+
+func TestLoadConfig_EmptySystemPrompt_ReturnsDefault(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+
+	cfg := &Config{
+		Version: 1,
+		Models:  []ModelConfig{},
+		Chat:    ChatConfig{SystemPrompt: ""},
+	}
+	if err := Save(path, cfg); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	loaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if loaded.Chat.SystemPrompt != "你是一个有用的AI助手" {
+		t.Errorf("expected default prompt, got '%s'", loaded.Chat.SystemPrompt)
+	}
+}
+
+func TestLoadConfig_CorruptJSON_ReturnsError(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+	os.WriteFile(path, []byte("{not json"), 0644)
+
+	_, err := Load(path)
+	if err == nil {
+		t.Error("expected error for corrupt JSON")
 	}
 }

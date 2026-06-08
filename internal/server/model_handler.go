@@ -55,7 +55,10 @@ func (s *Server) handleUpdateModel(c *gin.Context) {
 				}
 			}
 
-			config.Save(s.configPath, s.config)
+			if err := config.Save(s.configPath, s.config); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save config"})
+				return
+			}
 			c.JSON(http.StatusOK, gin.H{"status": "updated"})
 			return
 		}

@@ -62,10 +62,10 @@ func New(st *store.Store, cfg *config.Config, chatSvc *chat.Service, configPath 
 	} else {
 		engine.StaticFS("/assets", mustSub(distFS, "assets"))
 		engine.GET("/", func(c *gin.Context) {
-			c.FileFromFS("/", http.FS(distFS))
+			c.FileFromFS("index.html", http.FS(distFS))
 		})
 		engine.NoRoute(func(c *gin.Context) {
-			c.FileFromFS("/", http.FS(distFS))
+			c.FileFromFS("index.html", http.FS(distFS))
 		})
 	}
 

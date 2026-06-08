@@ -1,2 +1,9 @@
 .superpowers/
 .omc/
+node_modules/
+web/dist/
+*.exe
+*.exe.bak
+*.exe.new
+data/
+config.json
